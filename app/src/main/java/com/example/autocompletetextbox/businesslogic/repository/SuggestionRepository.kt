@@ -13,27 +13,16 @@ class SuggestionRepository @Inject constructor(
 ) {
     fun getSuggestion(query: String): Single<List<Country>> {
         if (query.isEmpty()) return Single.just(emptyList())
-
         return countryRepository.getCountries()
             .map { countries ->
-                val scoredCountries = mutableMapOf<Country, Int>()
-
-                // Calculate partialRatio and add to scoredCountries map
-                countries.forEach { country ->
-
-                    val ratioScore = FuzzySearch.ratio(query.lowercase(), country.name.lowercase())
-
-                    if (ratioScore > 0) {
-                        scoredCountries[country] = ratioScore
-                    }
+                countries.map { country ->
+                    val ratio = FuzzySearch.ratio(query.lowercase(), country.name.lowercase())
+                    val partialRatio = FuzzySearch.partialRatio(query.lowercase(), country.name.lowercase())
+                    country to maxOf(ratio,partialRatio)
                 }
-                // Sort by score in descending order and limit to top 5 results
-                scoredCountries.entries
-                    .sortedByDescending { it.value }
+                    .sortedByDescending { (_,score) -> score }
+                    .map { (country,_) -> country }
                     .take(5)
-                    .map { it.key }
             }
     }
-
-
 }

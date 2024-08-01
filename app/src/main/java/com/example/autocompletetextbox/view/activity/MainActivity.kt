@@ -24,6 +24,9 @@ class MainActivity : AppCompatActivity() {
 
         setupRecyclerView()
 
+        viewModel.query.observe(this) { query ->
+            viewModel.querySubject.onNext(query)
+        }
     }
 
     private fun scrollToTop() {
